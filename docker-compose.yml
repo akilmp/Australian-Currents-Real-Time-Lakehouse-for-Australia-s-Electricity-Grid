@@ -1,0 +1,132 @@
+version: "3.8"
+
+services:
+  redpanda:
+    image: redpandadata/redpanda:latest
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./minio/data:/data
+
+  spark-master:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+
+  spark-worker:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"
+
+  airflow:
+    image: apache/airflow:2.7.1
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    command: ["airflow", "standalone"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+
+  spark-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "5556"
+      - "/config/spark-prometheus.yaml"
+    volumes:
+      - ./monitoring/exporters/spark-prometheus.yaml:/config/spark-prometheus.yaml
+
+  kafka-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "5556"
+      - "/config/kafka-prometheus.yaml"
+    volumes:
+      - ./monitoring/exporters/kafka-prometheus.yaml:/config/kafka-prometheus.yaml
+
+  flink-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "5556"
+      - "/config/flink-prometheus.yaml"
+    volumes:
+      - ./monitoring/exporters/flink-prometheus.yaml:/config/flink-prometheus.yaml
+
+  airflow-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "9102"
+      - "/config/airflow-prometheus.cfg"
+    volumes:
+      - ./monitoring/exporters/airflow-prometheus.cfg:/config/airflow-prometheus.cfg
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alerts/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./monitoring/alerts/rules.yml:/etc/alertmanager/rules.yml
+
+  prometheus:
+    image: prom/prometheus:latest
+    depends_on:
+      - spark-exporter
+      - kafka-exporter
+      - flink-exporter
+      - airflow-exporter
+      - alertmanager
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alerts/rules.yml:/etc/prometheus/rules.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+
+  solar-forecast:
+    build:
+      context: ./flink_jobs
+      dockerfile: Dockerfile
+    depends_on:
+      - redpanda
+    environment:
+      - KAFKA_BROKERS=redpanda:9092
+      - MODEL_HORIZON=48
+      - CHECKPOINT_PATH=/tmp/flink-checkpoints

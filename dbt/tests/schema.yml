@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: fact_dispatch
+    columns:
+      - name: trading_date
+        tests:
+          - not_null
+      - name: generated_mw
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+  - name: dim_unit
+    columns:
+      - name: unit_id
+        tests:
+          - not_null
+          - unique
+  - name: dim_region
+    columns:
+      - name: region_id
+        tests:
+          - not_null
+          - unique

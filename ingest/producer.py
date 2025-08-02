@@ -1,10 +1,13 @@
 import asyncio
 import csv
-import io
+
 import json
 import logging
 import os
+import pathlib
 import zlib
+from typing import Optional
+
 
 import aiohttp
 from aiokafka import AIOKafkaProducer
