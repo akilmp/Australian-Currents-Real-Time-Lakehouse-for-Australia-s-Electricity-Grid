@@ -53,6 +53,12 @@ variable "emr_application_type" {
   type        = string
 }
 
+variable "emr_spot_capacity" {
+  description = "Maximum EMR Serverless spot capacity units"
+  type        = number
+  default     = 20
+}
+
 variable "ecs_cluster_name" {
   description = "Name of the ECS cluster for Flink"
   type        = string
@@ -65,5 +71,16 @@ variable "amp_workspace_name" {
 
 variable "grafana_workspace_name" {
   description = "Name of Grafana workspace"
+  type        = string
+}
+
+variable "budget_amount" {
+  description = "Monthly cost budget limit in USD"
+  type        = number
+  default     = 100
+}
+
+variable "budget_email" {
+  description = "Email address for budget notifications"
   type        = string
 }
