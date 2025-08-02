@@ -201,6 +201,25 @@ CI runner performs identical plan/apply via GitHub Actions.
 
 * PyFlink job `solar_forecast.py` consumes Silver stream, fits Prophet model window = 14 days sliding, emits 30‑min ahead forecast to Kafka topic `forecast_solar_share` and Iceberg table `nem.forecast`.
 
+Run locally:
+
+```bash
+docker compose run --rm solar-forecast --horizon 48
+```
+
+Deploy to Kinesis Data Analytics for Apache Flink:
+
+1. Build and push the image to ECR.
+
+   ```bash
+   docker build -t solar-forecast -f flink_jobs/Dockerfile flink_jobs
+   aws ecr create-repository --repository-name solar-forecast
+   docker tag solar-forecast:latest <account>.dkr.ecr.<region>.amazonaws.com/solar-forecast:latest
+   docker push <account>.dkr.ecr.<region>.amazonaws.com/solar-forecast:latest
+   ```
+
+2. Create a Kinesis Data Analytics application referencing the image. Configure environment variables such as `KAFKA_BROKERS`, `MODEL_HORIZON` and `CHECKPOINT_PATH` and point the job to the `forecast_solar_share` Kafka topic and Iceberg catalog.
+
 ---
 
 ## Data Quality & Testing
