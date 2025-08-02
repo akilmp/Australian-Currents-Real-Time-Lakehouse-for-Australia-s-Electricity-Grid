@@ -106,7 +106,9 @@
 | **NEM Dispatch SCADA**   | `https://aemo.com.au/...CSV` | every 5 min | \~60 k rows/hour |
 | **Unit Static Metadata** | AEMO unit registry CSV       | monthly     | 1 MB             |
 
-API key not required (public).  Producer script stores latest CRC to skip duplicates.
+API key not required (public).  Producer script stores latest CRC to skip duplicates and
+persists it to a checkpoint file defined by the `CRC_CHECKPOINT_PATH` environment
+variable.
 
 ---
 
