@@ -38,10 +38,28 @@ module "compute" {
   emr_release_label    = var.emr_release_label
   emr_application_type = var.emr_application_type
   ecs_cluster_name     = var.ecs_cluster_name
+  emr_spot_capacity    = var.emr_spot_capacity
 }
 
 module "observability" {
   source                 = "./modules/observability"
   amp_workspace_name     = var.amp_workspace_name
   grafana_workspace_name = var.grafana_workspace_name
+}
+
+resource "aws_budgets_budget" "monthly" {
+  name        = "monthly-budget"
+  budget_type = "COST"
+  time_unit   = "MONTHLY"
+
+  limit_amount = var.budget_amount
+  limit_unit   = "USD"
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    notification_type          = "ACTUAL"
+    threshold                  = 80
+    threshold_type             = "PERCENTAGE"
+    subscriber_email_addresses = [var.budget_email]
+  }
 }
