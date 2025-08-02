@@ -260,6 +260,20 @@ Secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `GRAFANA_API_KEY`, Slack 
 
 Grafana dashboards exported as JSON to `docs/grafana/` (Import ID 12050).
 
+### Viewing Grafana Dashboards
+
+1. Start the monitoring stack:
+
+   ```bash
+   docker compose up -d \
+     prometheus grafana alertmanager \
+     spark-exporter kafka-exporter flink-exporter airflow-exporter
+   ```
+
+2. Visit [http://localhost:3000](http://localhost:3000) and log in with the default `admin`/`admin` credentials.
+3. The built-in Prometheus data source is preconfigured to scrape the exporters defined in `monitoring/prometheus.yml`.
+4. Open a dashboard to explore Spark, Kafka, Flink and Airflow metrics.
+
 ---
 
 ## Cost Management
