@@ -1,0 +1,17 @@
+name: energy_grid
+version: 1.0.0
+config-version: 2
+
+profile: energy_grid
+
+model-paths: ["models"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+
+# Ensure compiled artifacts are stored inside the project
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  energy_grid:
+    +materialized: view

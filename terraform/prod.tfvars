@@ -1,0 +1,14 @@
+region                   = "ap-southeast-2"
+vpc_cidr                 = "10.1.0.0/16"
+bucket_name              = "prod-data-bucket"
+glue_database_name       = "prod_glue_db"
+kafka_version            = "3.5.1"
+kafka_broker_nodes       = 3
+kafka_instance_type      = "kafka.m5.large"
+kafka_subnet_ids         = ["subnet-cccc3333", "subnet-dddd4444"]
+kafka_security_group_ids = ["sg-bbbb2222"]
+emr_release_label        = "emr-7.0.0"
+emr_application_type     = "SPARK"
+ecs_cluster_name         = "prod-flink-cluster"
+amp_workspace_name       = "prod-amp"
+grafana_workspace_name   = "prod-grafana"
