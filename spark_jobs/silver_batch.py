@@ -3,8 +3,8 @@
 This job reads the raw dispatch table ``nem.bronze_dispatch`` and performs the
 following operations:
 
-* drop duplicate records based on ``transaction_datetime``
-* join unit metadata to append ``fuel_type`` and ``station_name``
+* drop duplicate records based on ``trading_interval`` and ``unit_id``
+* join unit metadata to append ``station_name``
 * write the cleaned result to ``nem.silver_dispatch_clean`` Iceberg table
   partitioned by ``trading_date``
 
@@ -33,11 +33,15 @@ def transform_dispatch(spark: SparkSession) -> DataFrame:
     dispatch_df = spark.table("nem.bronze_dispatch")
     metadata_df = spark.table("nem.unit_metadata")
 
-    # Remove duplicate transaction timestamps
-    deduped = dispatch_df.dropDuplicates(["transaction_datetime"])
+    # Remove duplicate records
+    deduped = dispatch_df.dropDuplicates(["trading_interval", "unit_id"])
 
-    # Join metadata to append fuel_type and station_name
-    enriched = deduped.join(metadata_df.select("unit_id", "fuel_type", "station_name"), on="unit_id", how="left")
+    # Join metadata to append station_name
+    enriched = deduped.join(
+        metadata_df.select("unit_id", "station_name"),
+        on="unit_id",
+        how="left",
+    )
 
     return enriched
 

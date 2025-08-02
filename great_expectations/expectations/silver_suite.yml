@@ -12,6 +12,10 @@ expectations:
     kwargs:
       column: generated_mw
       mostly: 0.98
+  - expectation_type: expect_column_values_to_be_of_type
+    kwargs:
+      column: generated_mw
+      type_: DOUBLE
   - expectation_type: expect_column_values_to_be_between
     kwargs:
       column: generated_mw

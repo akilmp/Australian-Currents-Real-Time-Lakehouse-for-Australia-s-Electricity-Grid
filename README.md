@@ -180,22 +180,22 @@ CI runner performs identical plan/apply via GitHub Actions.
 ### 9.1 Streaming Ingestion – Bronze
 
 * **Producer**: Async `aiohttp` fetch of latest AEMO dispatch CSV every 300 s.
-* **Kafka**: Topic `nem_dispatch`, 3 partitions keyed by `region`.
+* **Kafka**: Topic `nem_dispatch`, 3 partitions keyed by `unit_id`.
 * **Spark Structured Streaming**: Reads topic; writes Iceberg `nem.bronze_dispatch` partitioned by `trading_date`.
 
 ### 9.2 Batch Cleansing – Silver
 
 * Hourly Airflow task runs Spark job `silver_batch.py`:
 
-  * Deduplicate (`transaction_datetime` pk).
-  * Join static Unit metadata to add `fuel_type`, `station_name`.
+  * Deduplicate (`trading_interval` × `unit_id` pk).
+  * Join static Unit metadata to add `station_name`.
   * Outputs `nem.silver_dispatch_clean`.
 
 ### 9.3 Warehouse Modelling – Gold
 
-* **dbt model** `fact_dispatch` aggregates generation by 5‑min interval × region × fuel\_type.
+* **dbt model** `fact_dispatch` aggregates generation by `trading_interval` × `unit_id` × `fuel_type`.
 * `dim_unit` and `dim_region` built from metadata and reference tables.
-* Incremental, partitioned on `trading_date`.
+* Incremental, partitioned on `trading_interval`.
 
 ### 9.4 Online Forecasting
 
