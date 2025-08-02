@@ -9,7 +9,7 @@ select
     trading_date,
     unit_name,
     region_id
-from raw_dim_unit
+from {{ ref('raw_dim_unit') }}
 {% if is_incremental() %}
   where trading_date >= (select coalesce(max(trading_date), '1900-01-01') from {{ this }})
 {% endif %}

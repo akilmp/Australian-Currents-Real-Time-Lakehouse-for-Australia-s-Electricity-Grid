@@ -1,6 +1,27 @@
 version: 2
 
 models:
+  - name: raw_fact_dispatch
+    columns:
+      - name: trading_interval
+        tests:
+          - not_null
+      - name: unit_id
+        tests:
+          - not_null
+          - unique
+  - name: raw_dim_unit
+    columns:
+      - name: unit_id
+        tests:
+          - not_null
+          - unique
+  - name: raw_dim_region
+    columns:
+      - name: region_id
+        tests:
+          - not_null
+          - unique
   - name: fact_dispatch
     columns:
       - name: trading_date
