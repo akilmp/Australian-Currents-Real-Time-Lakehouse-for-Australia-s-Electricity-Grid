@@ -13,7 +13,10 @@ can be unit tested without requiring an Iceberg catalog.
 """
 from __future__ import annotations
 
+import os
+
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col, sum as spark_sum, when, struct, to_json
 
 
 def transform_dispatch(spark: SparkSession) -> DataFrame:
@@ -60,6 +63,28 @@ def main() -> None:
         .using("iceberg")
         .partitionedBy("trading_date")
         .createOrReplace()
+    )
+
+    # Publish aggregated solar share to Kafka
+    solar_share_df = (
+        result_df.groupBy("trading_interval")
+        .agg(
+            (
+                spark_sum(when(col("fuel_type") == "Solar", col("generated_mw")))
+                / spark_sum(col("generated_mw"))
+            ).alias("solar_share")
+        )
+        .withColumnRenamed("trading_interval", "event_time")
+        .withColumn("event_time", col("event_time").cast("string"))
+    )
+
+    brokers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    (
+        solar_share_df.select(to_json(struct("event_time", "solar_share")).alias("value"))
+        .write.format("kafka")
+        .option("kafka.bootstrap.servers", brokers)
+        .option("topic", "silver_dispatch")
+        .save()
     )
 
     spark.stop()

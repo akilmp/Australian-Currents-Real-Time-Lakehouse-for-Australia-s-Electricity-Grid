@@ -202,6 +202,7 @@ CI runner performs identical plan/apply via GitHub Actions.
   * Deduplicate (`trading_interval` × `unit_id` pk).
   * Join static Unit metadata to add `station_name`.
   * Outputs `nem.silver_dispatch_clean`.
+  * Publishes solar share to Kafka topic `silver_dispatch`.
 
 ### 9.3 Warehouse Modelling – Gold
 

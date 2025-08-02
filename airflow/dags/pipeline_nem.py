@@ -102,13 +102,15 @@ def pipeline_nem():
         task_id="silver_batch",
         bash_command=(
             "spark-submit --packages "
-            "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.4.2 "
+            "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.4.2,"
+            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.2 "
             f"{REPO_ROOT}/spark_jobs/silver_batch.py"
         ),
         env={
             "AWS_ACCESS_KEY_ID": "{{ conn.minio_default.login }}",
             "AWS_SECRET_ACCESS_KEY": "{{ conn.minio_default.password }}",
             "AWS_ENDPOINT_URL": "{{ conn.minio_default.extra_dejson.endpoint_url }}",
+            "KAFKA_BOOTSTRAP_SERVERS": "{{ conn.kafka_default.host }}",
         },
     )
 
