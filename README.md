@@ -148,11 +148,21 @@ kangaroo-currents/
 ## Local Development Environment
 
 1. `git clone https://github.com/<you>/kangaroo-currents && cd kangaroo-currents`
-2. `cp .env.example .env` – set `NEM_BUCKET`, `AWS_CREDS` if using localstack.
+2. `cp .env.example .env` – set environment variables for storage and APIs (see below).
 3. `docker compose up -d` – spins Redpanda, MinIO, Airflow, Spark Master.
 4. Start producer: `python ingest/producer.py`.
 5. Trigger Airflow DAG `pipeline_nem` manually to generate Silver & Gold.
 6. Explore dashboards: Grafana on `localhost:3000` (admin/admin).
+
+### Environment Variables
+
+| Variable | Description |
+| -------- | ----------- |
+| `NEM_BUCKET` | S3 bucket that stores raw and processed NEM datasets. |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Credentials used by Spark and Airflow to access the bucket. |
+| `API_URL` | Source endpoint for NEM dispatch CSV feed. |
+| `SLACK_WEBHOOK` / `SLACK_WEBHOOK_URL` | Slack webhooks for Airflow notifications and Alertmanager alerts. |
+| `GRAFANA_API_KEY` | API key for pushing metrics and dashboards to Grafana. |
 
 ---
 
