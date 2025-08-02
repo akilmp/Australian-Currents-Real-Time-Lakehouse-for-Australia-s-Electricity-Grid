@@ -1,0 +1,15 @@
+expectation_suite_name: bronze_suite
+expectations:
+  - expectation_type: expect_column_values_to_not_be_null
+    kwargs:
+      column: id
+  - expectation_type: expect_column_values_to_not_be_null
+    kwargs:
+      column: reading
+  - expectation_type: expect_column_values_to_be_between
+    kwargs:
+      column: reading
+      min_value: 0
+      max_value: 1000
+    meta:
+      notes: Ensure readings fall within realistic bounds
