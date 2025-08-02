@@ -35,8 +35,9 @@ def main():
         f"""
         CREATE TABLE IF NOT EXISTS {args.table_name} (
             trading_interval TIMESTAMP,
-            region STRING,
-            demand DOUBLE,
+            unit_id STRING,
+            generated_mw DOUBLE,
+            fuel_type STRING,
             trading_date DATE,
             ingested_at TIMESTAMP
         )
@@ -47,8 +48,9 @@ def main():
 
     schema = StructType([
         StructField("trading_interval", TimestampType()),
-        StructField("region", StringType()),
-        StructField("demand", DoubleType()),
+        StructField("unit_id", StringType()),
+        StructField("generated_mw", DoubleType()),
+        StructField("fuel_type", StringType()),
     ])
 
     raw_df = (

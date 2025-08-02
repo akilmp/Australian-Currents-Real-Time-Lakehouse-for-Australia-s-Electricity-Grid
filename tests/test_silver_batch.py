@@ -24,8 +24,15 @@ def test_transform_dispatch(spark):
 
     base_path = pathlib.Path(__file__).parent / "spark"
 
-    bronze_schema = "unit_id string, transaction_datetime timestamp, trading_date date"
-    bronze_df = spark.read.csv(str(base_path / "bronze_dispatch.csv"), header=True, schema=bronze_schema)
+    bronze_schema = (
+        "unit_id string, trading_interval timestamp, generated_mw double, "
+        "fuel_type string, trading_date date"
+    )
+    bronze_df = spark.read.csv(
+        str(base_path / "bronze_dispatch.csv"),
+        header=True,
+        schema=bronze_schema,
+    )
     bronze_df.write.mode("overwrite").saveAsTable("nem.bronze_dispatch")
 
     meta_schema = "unit_id string, fuel_type string, station_name string"
@@ -42,5 +49,7 @@ def test_transform_dispatch(spark):
     assert ("UNIT1", "Coal", "StationA") in rows
     assert ("UNIT2", "Solar", "StationB") in rows
 
-    # Ensure transaction_datetime is unique
-    assert result.select("transaction_datetime").distinct().count() == result.count()
+    # Ensure trading_interval and unit_id combinations are unique
+    assert (
+        result.select("trading_interval", "unit_id").distinct().count() == result.count()
+    )

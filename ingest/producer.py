@@ -43,11 +43,24 @@ def save_crc(path: pathlib.Path, crc: int) -> None:
 
 
 async def produce_records(producer: AIOKafkaProducer, topic: str, data: bytes) -> int:
+    """Parse CSV bytes and send normalised JSON records to Kafka.
+
+    The source CSV may contain header names in various cases. This function
+    normalises them to the project-wide field names so downstream Spark jobs
+    receive consistent schemas.
+    """
+
     text = data.decode("utf-8")
     reader = csv.DictReader(text.splitlines())
     count = 0
     for row in reader:
-        await producer.send_and_wait(topic, json.dumps(row).encode("utf-8"))
+        record = {
+            "trading_interval": row.get("trading_interval") or row.get("TRADING_INTERVAL"),
+            "unit_id": row.get("unit_id") or row.get("UNIT_ID"),
+            "generated_mw": float(row.get("generated_mw") or row.get("GENERATED_MW", 0) or 0),
+            "fuel_type": row.get("fuel_type") or row.get("FUEL_TYPE"),
+        }
+        await producer.send_and_wait(topic, json.dumps(record).encode("utf-8"))
         count += 1
     return count
 
