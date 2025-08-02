@@ -1,0 +1,19 @@
+groups:
+  - name: generation
+    rules:
+      - alert: HighCoalPercentage
+        expr: (sum(rate(power_generation_megawatts{source="coal"}[5m])) / sum(rate(power_generation_megawatts[5m]))) * 100 > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Coal generation exceeds 60% of total generation'
+  - name: pipeline
+    rules:
+      - alert: PipelineFailure
+        expr: pipeline_status == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Data pipeline failure detected'

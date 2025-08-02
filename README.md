@@ -1,5 +1,26 @@
 # KangarooCurrents-Real-Time-Lakehouse-for-Australia-s-Electricity-Grid
 
+
+
+## Exporters
+Configuration files for Prometheus exporters are located in `monitoring/exporters` and cover:
+- Spark
+- Kafka
+- Airflow
+- Flink
+
+## Grafana Dashboards
+JSON exports for Grafana are stored in `docs/grafana` and include dashboards for:
+- Generation mix
+- Consumer lag
+- Forecast error
+
+## Alerting
+Prometheus Alertmanager configuration and rules live in `monitoring/alerts`. Alerts are sent to Slack for:
+- High coal percentage of total generation
+- Pipeline failures
+
+Set the `SLACK_WEBHOOK_URL` environment variable and update channel names as needed before deploying the alerting stack.
 ## Terraform
 
 Infrastructure as code lives in the [`terraform/`](terraform/) directory. Remote state is stored in S3 with DynamoDB locks. Use workspaces and variable files to manage environments:
