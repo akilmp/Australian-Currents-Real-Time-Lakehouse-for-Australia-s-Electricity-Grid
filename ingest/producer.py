@@ -1,7 +1,6 @@
 import asyncio
 import csv
-
-import json
+import io
 import logging
 import os
 import pathlib
@@ -15,7 +14,7 @@ from aiokafka import AIOKafkaProducer
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-TOPIC_NAME = os.getenv("KAFKA_TOPIC", "energy-data")
+TOPIC_NAME = os.getenv("KAFKA_TOPIC", "nem_dispatch")
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "300"))
 BASE_API_URL = os.getenv("BASE_API_URL", "http://localhost/data.csv")
 BOOTSTRAP_SERVERS = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
@@ -45,8 +44,15 @@ async def send_records(producer: AIOKafkaProducer, topic: str, data: bytes) -> N
     text = data.decode("utf-8")
     reader = csv.DictReader(io.StringIO(text))
     for row in reader:
-        message = json.dumps(row).encode("utf-8")
-        await producer.send_and_wait(topic, message)
+        record = ",".join(
+            [
+                row["trading_interval"],
+                row["unit_id"],
+                row["generated_mw"],
+                row["fuel_type"],
+            ]
+        )
+        await producer.send_and_wait(topic, record.encode("utf-8"))
     logger.info("Sent %d records", reader.line_num - 1)
 
 
