@@ -1,5 +1,6 @@
 import asyncio
 import csv
+
 import json
 import logging
 import os
@@ -7,93 +8,72 @@ import pathlib
 import zlib
 from typing import Optional
 
+
 import aiohttp
 from aiokafka import AIOKafkaProducer
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-LOGGER = logging.getLogger("producer")
-
-
-API_URL = os.getenv("API_URL", "https://example.com/latest_dispatch.csv")
-KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "nem_dispatch")
+TOPIC_NAME = os.getenv("KAFKA_TOPIC", "energy-data")
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "300"))
-CRC_CHECKPOINT_PATH = pathlib.Path(os.getenv("CRC_CHECKPOINT_PATH", "/tmp/dispatch_crc"))
-KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+BASE_API_URL = os.getenv("BASE_API_URL", "http://localhost/data.csv")
+BOOTSTRAP_SERVERS = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
 
 
 async def fetch_csv(session: aiohttp.ClientSession, url: str) -> bytes:
-    async with session.get(url) as resp:
-        resp.raise_for_status()
-        return await resp.read()
+    retries = 3
+    backoff = 1
+    for attempt in range(1, retries + 1):
+        try:
+            async with session.get(url) as resp:
+                resp.raise_for_status()
+                return await resp.read()
+        except Exception as exc:  # pragma: no cover - logging
+            logger.warning("Fetch attempt %s failed: %s", attempt, exc)
+            if attempt == retries:
+                raise
+            await asyncio.sleep(backoff)
+            backoff *= 2
 
 
-def load_crc(path: pathlib.Path) -> Optional[int]:
-    try:
-        return int(path.read_text().strip())
-    except FileNotFoundError:
-        return None
-    except ValueError:
-        return None
+def compute_crc(data: bytes) -> int:
+    return zlib.crc32(data) & 0xFFFFFFFF
 
 
-def save_crc(path: pathlib.Path, crc: int) -> None:
-    path.write_text(str(crc))
-
-
-async def produce_records(producer: AIOKafkaProducer, topic: str, data: bytes) -> int:
-    """Parse CSV bytes and send normalised JSON records to Kafka.
-
-    The source CSV may contain header names in various cases. This function
-    normalises them to the project-wide field names so downstream Spark jobs
-    receive consistent schemas.
-    """
-
+async def send_records(producer: AIOKafkaProducer, topic: str, data: bytes) -> None:
     text = data.decode("utf-8")
-    reader = csv.DictReader(text.splitlines())
-    count = 0
+    reader = csv.DictReader(io.StringIO(text))
     for row in reader:
-        record = {
-            "trading_interval": row.get("trading_interval") or row.get("TRADING_INTERVAL"),
-            "unit_id": row.get("unit_id") or row.get("UNIT_ID"),
-            "generated_mw": float(row.get("generated_mw") or row.get("GENERATED_MW", 0) or 0),
-            "fuel_type": row.get("fuel_type") or row.get("FUEL_TYPE"),
-        }
-        await producer.send_and_wait(topic, json.dumps(record).encode("utf-8"))
-        count += 1
-    return count
+        message = json.dumps(row).encode("utf-8")
+        await producer.send_and_wait(topic, message)
+    logger.info("Sent %d records", reader.line_num - 1)
 
 
-async def run() -> None:
-    session = aiohttp.ClientSession()
-    producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
+async def main() -> None:
+    producer = AIOKafkaProducer(bootstrap_servers=BOOTSTRAP_SERVERS)
     await producer.start()
-    last_crc = load_crc(CRC_CHECKPOINT_PATH)
-    backoff = 5
+    session = aiohttp.ClientSession()
+    last_crc: int | None = None
     try:
         while True:
             try:
-                data = await fetch_csv(session, API_URL)
-                crc = zlib.crc32(data)
-                if crc == last_crc:
-                    LOGGER.info("No new data available")
-                else:
-                    records = await produce_records(producer, KAFKA_TOPIC, data)
-                    LOGGER.info("Produced %s records", records)
-                    last_crc = crc
-                    save_crc(CRC_CHECKPOINT_PATH, crc)
-                backoff = 5
-            except Exception as exc:  # noqa: BLE001
-                LOGGER.exception("Error in fetch/produce loop: %s", exc)
-                await asyncio.sleep(backoff)
-                backoff = min(backoff * 2, 300)
+                data = await fetch_csv(session, BASE_API_URL)
+            except Exception as exc:  # pragma: no cover - logging
+                logger.error("Failed to fetch CSV: %s", exc)
+                await asyncio.sleep(POLL_INTERVAL)
                 continue
+            crc = compute_crc(data)
+            if crc == last_crc:
+                logger.info("No new data; skipping send")
+            else:
+                await send_records(producer, TOPIC_NAME, data)
+                last_crc = crc
             await asyncio.sleep(POLL_INTERVAL)
     finally:
-        await producer.stop()
         await session.close()
+        await producer.stop()
 
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    asyncio.run(main())
