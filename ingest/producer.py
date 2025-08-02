@@ -18,6 +18,9 @@ TOPIC_NAME = os.getenv("KAFKA_TOPIC", "nem_dispatch")
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "300"))
 BASE_API_URL = os.getenv("BASE_API_URL", "http://localhost/data.csv")
 BOOTSTRAP_SERVERS = os.getenv("BOOTSTRAP_SERVERS", "localhost:9092")
+CHECKPOINT_FILE = pathlib.Path(
+    os.getenv("CRC_CHECKPOINT_PATH", "checkpoint.crc")
+)
 
 
 async def fetch_csv(session: aiohttp.ClientSession, url: str) -> bytes:
@@ -56,11 +59,29 @@ async def send_records(producer: AIOKafkaProducer, topic: str, data: bytes) -> N
     logger.info("Sent %d records", reader.line_num - 1)
 
 
+def read_checkpoint(path: pathlib.Path) -> Optional[int]:
+    try:
+        return int(path.read_text())
+    except FileNotFoundError:
+        return None
+    except Exception as exc:  # pragma: no cover - logging
+        logger.warning("Failed to read checkpoint: %s", exc)
+        return None
+
+
+def write_checkpoint(path: pathlib.Path, crc: int) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(str(crc))
+    except Exception as exc:  # pragma: no cover - logging
+        logger.warning("Failed to write checkpoint: %s", exc)
+
+
 async def main() -> None:
     producer = AIOKafkaProducer(bootstrap_servers=BOOTSTRAP_SERVERS)
     await producer.start()
     session = aiohttp.ClientSession()
-    last_crc: int | None = None
+    last_crc: int | None = read_checkpoint(CHECKPOINT_FILE)
     try:
         while True:
             try:
@@ -75,6 +96,7 @@ async def main() -> None:
             else:
                 await send_records(producer, TOPIC_NAME, data)
                 last_crc = crc
+                write_checkpoint(CHECKPOINT_FILE, crc)
             await asyncio.sleep(POLL_INTERVAL)
     finally:
         await session.close()
