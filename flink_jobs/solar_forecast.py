@@ -65,6 +65,7 @@ def main() -> None:
 
     brokers = os.getenv("KAFKA_BROKERS", "redpanda:9092")
     warehouse = os.getenv("ICEBERG_WAREHOUSE", "s3a://lakehouse")
+    source_topic = os.getenv("SILVER_TOPIC", "silver_dispatch")
 
     env = StreamExecutionEnvironment.get_execution_environment()
     env.enable_checkpointing(300000)
@@ -74,7 +75,7 @@ def main() -> None:
     source = (
         KafkaSource.builder()
         .set_bootstrap_servers(brokers)
-        .set_topics("silver_dispatch")
+        .set_topics(source_topic)
         .set_group_id("solar-forecast")
         .set_starting_offsets(KafkaOffsetsInitializer.latest())
         .set_value_only_deserializer(SimpleStringSchema())
