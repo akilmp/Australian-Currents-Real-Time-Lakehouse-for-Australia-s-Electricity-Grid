@@ -191,6 +191,12 @@ CI runner performs identical plan/apply via GitHub Actions.
 
 ## Data Pipeline Details
 
+### Metadata Ingestion
+
+* `spark-submit ingest/load_metadata.py --unit-csv path/to/unit.csv --region-csv path/to/region.csv`
+  loads static unit and region metadata into Iceberg tables `nem.unit_metadata`
+  and `nem.region_metadata`.
+
 ### 9.1 Streaming Ingestion – Bronze
 
 * **Producer**: Async `aiohttp` fetch of latest AEMO dispatch CSV every 300 s.

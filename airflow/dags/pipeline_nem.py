@@ -86,6 +86,28 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     tags=["nem", "lakehouse"],
 )
 def pipeline_nem():
+    unit_csv = os.getenv(
+        "UNIT_METADATA_CSV", f"{REPO_ROOT}/tests/spark/unit_metadata.csv"
+    )
+    region_csv = os.getenv(
+        "REGION_METADATA_CSV", f"{REPO_ROOT}/tests/spark/region_metadata.csv"
+    )
+
+    load_metadata = BashOperator(
+        task_id="load_metadata",
+        bash_command=(
+            "spark-submit --packages "
+            "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.4.2 "
+            f"{REPO_ROOT}/ingest/load_metadata.py "
+            f"--unit-csv {unit_csv} --region-csv {region_csv}"
+        ),
+        env={
+            "AWS_ACCESS_KEY_ID": "{{ conn.minio_default.login }}",
+            "AWS_SECRET_ACCESS_KEY": "{{ conn.minio_default.password }}",
+            "AWS_ENDPOINT_URL": "{{ conn.minio_default.extra_dejson.endpoint_url }}",
+        },
+    )
+
     bronze_stream = BashOperator(
         task_id="bronze_stream",
         bash_command=f"bash {REPO_ROOT}/submit_bronze.sh",
@@ -153,8 +175,8 @@ def pipeline_nem():
         trigger_rule=TriggerRule.ONE_FAILED,
     )
 
-    bronze_stream >> ge_validate_bronze >> silver_batch >> ge_validate_silver >> dbt_run >> dbt_test
-    dbt_test >> [notify_success, notify_failure]
+    load_metadata >> bronze_stream >> silver_batch >> dbt_run >> dbt_test >> ge_validate_bronze >> ge_validate_silver
+    ge_validate_silver >> [notify_success, notify_failure]
 
 
 dag = pipeline_nem()
