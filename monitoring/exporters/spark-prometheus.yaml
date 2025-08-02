@@ -1,0 +1,7 @@
+startDelaySeconds: 0
+jmxUrl: service:jmx:rmi:///jndi/rmi://spark-master:7077/jmxrmi
+ssl: false
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+  - pattern: ".*"
