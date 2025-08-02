@@ -18,6 +18,9 @@ services:
     ports:
       - "9092:9092"
       - "9644:9644"
+      - "9999:9999"
+    environment:
+      - JMX_PORT=9999
 
   minio:
     image: minio/minio:latest

@@ -1,4 +1,5 @@
 startDelaySeconds: 0
+jmxUrl: service:jmx:rmi:///jndi/rmi://redpanda:9999/jmxrmi
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
 rules:
