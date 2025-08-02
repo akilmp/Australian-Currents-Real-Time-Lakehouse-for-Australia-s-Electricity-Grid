@@ -59,10 +59,59 @@ services:
     volumes:
       - ./airflow/dags:/opt/airflow/dags
 
+  spark-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "5556"
+      - "/config/spark-prometheus.yaml"
+    volumes:
+      - ./monitoring/exporters/spark-prometheus.yaml:/config/spark-prometheus.yaml
+
+  kafka-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "5556"
+      - "/config/kafka-prometheus.yaml"
+    volumes:
+      - ./monitoring/exporters/kafka-prometheus.yaml:/config/kafka-prometheus.yaml
+
+  flink-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "5556"
+      - "/config/flink-prometheus.yaml"
+    volumes:
+      - ./monitoring/exporters/flink-prometheus.yaml:/config/flink-prometheus.yaml
+
+  airflow-exporter:
+    image: prom/jmx-exporter:latest
+    command:
+      - "9102"
+      - "/config/airflow-prometheus.cfg"
+    volumes:
+      - ./monitoring/exporters/airflow-prometheus.cfg:/config/airflow-prometheus.cfg
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alerts/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./monitoring/alerts/rules.yml:/etc/alertmanager/rules.yml
+
   prometheus:
     image: prom/prometheus:latest
+    depends_on:
+      - spark-exporter
+      - kafka-exporter
+      - flink-exporter
+      - airflow-exporter
+      - alertmanager
     ports:
       - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alerts/rules.yml:/etc/prometheus/rules.yml
 
   grafana:
     image: grafana/grafana:latest
