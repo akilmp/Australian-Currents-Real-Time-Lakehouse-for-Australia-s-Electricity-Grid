@@ -2,12 +2,36 @@ expectation_suite_name: silver_suite
 expectations:
   - expectation_type: expect_column_values_to_not_be_null
     kwargs:
-      column: id
+      column: trading_interval
       mostly: 0.99
   - expectation_type: expect_column_values_to_not_be_null
     kwargs:
-      column: reading
-      mostly: 0.98
-  - expectation_type: expect_column_values_to_be_unique
+      column: unit_id
+      mostly: 0.99
+  - expectation_type: expect_column_values_to_not_be_null
     kwargs:
-      column: id
+      column: generated_mw
+      mostly: 0.98
+  - expectation_type: expect_column_values_to_be_between
+    kwargs:
+      column: generated_mw
+      min_value: 0
+      max_value: 10000
+  - expectation_type: expect_column_values_to_not_be_null
+    kwargs:
+      column: fuel_type
+      mostly: 0.95
+  - expectation_type: expect_column_values_to_be_in_set
+    kwargs:
+      column: fuel_type
+      value_set:
+        - Coal
+        - Gas
+        - Hydro
+        - Wind
+        - Solar
+  - expectation_type: expect_compound_columns_to_be_unique
+    kwargs:
+      column_list:
+        - trading_interval
+        - unit_id
