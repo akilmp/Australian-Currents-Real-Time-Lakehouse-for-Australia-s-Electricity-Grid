@@ -1,0 +1,14 @@
+name: bronze_checkpoint
+config_version: 1.0
+class_name: Checkpoint
+run_name_template: "%Y%m%d-%H%M%S-bronze"
+validations:
+  - batch_request:
+      datasource_name: spark_datasource
+      data_connector_name: default_runtime_data_connector_name
+      data_asset_name: bronze_dispatch
+      runtime_parameters:
+        query: "SELECT * FROM nem.bronze_dispatch"
+      batch_identifiers:
+        default_identifier_name: bronze_batch
+    expectation_suite_name: bronze_suite

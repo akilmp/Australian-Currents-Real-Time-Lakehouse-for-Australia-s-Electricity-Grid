@@ -122,8 +122,16 @@ def pipeline_nem():
         bash_command=f"cd {REPO_ROOT}/dbt && dbt test",
     )
 
-    ge_validation = BashOperator(
-        task_id="great_expectations_validation",
+    ge_validate_bronze = BashOperator(
+        task_id="ge_validate_bronze",
+        bash_command=(
+            f"cd {REPO_ROOT}/great_expectations && "
+            "great_expectations checkpoint run bronze_checkpoint"
+        ),
+    )
+
+    ge_validate_silver = BashOperator(
+        task_id="ge_validate_silver",
         bash_command=(
             f"cd {REPO_ROOT}/great_expectations && "
             "great_expectations checkpoint run silver_checkpoint"
@@ -143,8 +151,8 @@ def pipeline_nem():
         trigger_rule=TriggerRule.ONE_FAILED,
     )
 
-    bronze_stream >> silver_batch >> dbt_run >> dbt_test >> ge_validation
-    ge_validation >> [notify_success, notify_failure]
+    bronze_stream >> silver_batch >> dbt_run >> dbt_test >> ge_validate_bronze >> ge_validate_silver
+    ge_validate_silver >> [notify_success, notify_failure]
 
 
 dag = pipeline_nem()
