@@ -1,9 +1,9 @@
 """Pipeline DAG for NEM data processing.
 
 This DAG orchestrates a real-time lakehouse pipeline.  It submits a Spark
-streaming job that ingests Bronze data from Kafka, runs a Spark batch job to
-build the Silver layer on MinIO/S3, executes dbt models and tests, and finally
-runs Great Expectations validations.  Connections for Kafka, MinIO/S3 and Slack
+streaming job that ingests Bronze data from Kafka, validates the Bronze layer,
+runs a Spark batch job to build the Silver layer on MinIO/S3, validates it, and
+then executes dbt models and tests.  Connections for Kafka, MinIO/S3 and Slack
 are created automatically when the DAG is parsed so the pipeline can run in a
 fresh local environment.
 """
@@ -151,8 +151,8 @@ def pipeline_nem():
         trigger_rule=TriggerRule.ONE_FAILED,
     )
 
-    bronze_stream >> silver_batch >> dbt_run >> dbt_test >> ge_validate_bronze >> ge_validate_silver
-    ge_validate_silver >> [notify_success, notify_failure]
+    bronze_stream >> ge_validate_bronze >> silver_batch >> ge_validate_silver >> dbt_run >> dbt_test
+    dbt_test >> [notify_success, notify_failure]
 
 
 dag = pipeline_nem()
