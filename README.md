@@ -306,23 +306,6 @@ Grafana dashboards exported as JSON to `docs/grafana/` (Import ID 12050).
 
 ---
 
-## Demo Recording Guide
-
-| Time | Scene              | Key Actions                               |
-| ---- | ------------------ | ----------------------------------------- |
-| 0:00 | Intro              | Webcam intro, rationale                   |
-| 0:30 | Arch diagram       | Pan over `architecture.png`               |
-| 1:15 | Kafka + Spark      | Terminal split (kcat + spark logs)        |
-| 2:00 | Grafana heatmap    | Show renewable% timeline                  |
-| 2:45 | Trigger coal spike | `scripts/emit_test_msg.sh` -> Slack alert |
-| 3:30 | Forecast live      | Flink UI & Grafana panel                  |
-| 4:15 | CI run             | GitHub Actions green tick                 |
-| 5:00 | Outro              | Share repo URL & dashboard link           |
-
-Record in 1440p 60 fps, export YouTube `.mp4`, add CC subtitles.
-
----
-
 ## Troubleshooting & FAQ
 
 | Issue                                    | Fix                                                           |
