@@ -1,4 +1,4 @@
-# KangarooCurrents – Real‑Time Lakehouse for Australia’s Electricity Grid
+# Australian Currents – Real‑Time Lakehouse for Australia’s Electricity Grid
 
 ## Table of Contents
 
