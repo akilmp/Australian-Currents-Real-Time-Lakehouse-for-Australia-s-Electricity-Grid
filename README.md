@@ -29,7 +29,7 @@
 
 ## Project Overview
 
-**KangarooCurrents** is a real‑time data‑lakehouse that tracks Australia’s National Electricity Market (NEM) dispatch every five minutes to reveal the live mix of coal, gas, hydro and renewables.  The platform ingests dispatch CSV files from the Australian Energy Market Operator (AEMO), streams them into an Apache Iceberg lake on S3, transforms and models the data with Spark and dbt, validates quality gates through Great Expectations, publishes interactive Grafana dashboards and performs near‑term solar‑share forecasting using PyFlink.  The system is fully reproducible via Terraform and ships with CI/CD in GitHub Actions.
+**Australian Currents** is a real‑time data‑lakehouse that tracks Australia’s National Electricity Market (NEM) dispatch every five minutes to reveal the live mix of coal, gas, hydro and renewables.  The platform ingests dispatch CSV files from the Australian Energy Market Operator (AEMO), streams them into an Apache Iceberg lake on S3, transforms and models the data with Spark and dbt, validates quality gates through Great Expectations, publishes interactive Grafana dashboards and performs near‑term solar‑share forecasting using PyFlink.  The system is fully reproducible via Terraform and ships with CI/CD in GitHub Actions.
 
 ---
 
