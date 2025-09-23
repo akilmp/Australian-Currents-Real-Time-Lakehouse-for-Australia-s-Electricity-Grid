@@ -20,10 +20,9 @@
 11. [CI/CD Workflow](#cicd-workflow)
 12. [Observability & Alerting](#observability--alerting)
 13. [Cost Management](#cost-management)
-14. [Demo Recording Guide](#demo-recording-guide)
-15. [Troubleshooting & FAQ](#troubleshooting--faq)
-16. [Stretch Goals](#stretch-goals)
-17. [References](#references)
+14. [Troubleshooting & FAQ](#troubleshooting--faq)
+15. [Stretch Goals](#stretch-goals)
+16. [References](#references)
 
 ---
 
